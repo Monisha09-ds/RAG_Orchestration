@@ -1,0 +1,21 @@
+[project]
+name = "voice-rag"
+version = "0.1.0"
+description = "Voice RAG microservice — FAISS + ElevenLabs TTS + Groq"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.0.0",
+    "python-dotenv>=1.0.0",
+    "groq>=0.37.0",
+    "langchain-community>=0.4.1",
+    "langchain-huggingface>=1.2.0",
+    "langchain-text-splitters>=1.1.0",
+    "faiss-cpu>=1.9.0",
+    "pypdf>=6.6.0",
+    "requests>=2.32.0",
+    "Pillow>=11.0.0",
+    "PyMuPDF>=1.25.0",
+    "sentence-transformers>=5.0.0",
+    "streamlit>=1.53.0",
+    "werkzeug>=3.0.0",
+]
