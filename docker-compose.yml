@@ -1,0 +1,87 @@
+# ============================================================
+# RAG System — Unified Docker Compose
+# Orchestrates all microservices: Graph-RAG, Vector-RAG,
+# Voice-RAG, API Gateway, and supporting databases.
+# ============================================================
+
+services:
+
+  # --- API Gateway (Single Entry Point) ---
+  gateway:
+    build:
+      context: ./gateway
+    container_name: rag_gateway
+    restart: always
+    depends_on:
+      - graph-rag
+      - vector-rag
+      - voice-rag-server
+    ports:
+      - "8000:8000"
+
+  # --- Service 1: Graph-RAG (Neo4j + Groq) ---
+  graph-rag:
+    build:
+      context: ./services/graph-rag
+    container_name: rag_graph
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+
+  # --- Service 2: Vector-RAG (pgvector + FastAPI) ---
+  vector-rag:
+    build:
+      context: ./services/vector-rag
+    container_name: rag_vector
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - .env
+    ports:
+      - "8002:8002"
+
+  # --- Service 3a: Voice-RAG Server (Flask + ElevenLabs) ---
+  voice-rag-server:
+    build:
+      context: ./services/voice-rag
+      dockerfile: server/Dockerfile
+    container_name: rag_voice_server
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8003:5000"
+
+  # --- Service 3b: Voice-RAG Client (Streamlit) ---
+  voice-rag-client:
+    build:
+      context: ./services/voice-rag
+      dockerfile: client/Dockerfile
+    container_name: rag_voice_client
+    restart: always
+    depends_on:
+      - voice-rag-server
+    environment:
+      - BACKEND_URL=http://voice-rag-server:5000
+    ports:
+      - "8004:8501"
+
+  # --- PostgreSQL + pgvector (for Vector-RAG) ---
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: rag_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-rag_db}
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
