@@ -69,6 +69,19 @@ services:
     ports:
       - "8004:8501"
 
+  # --- Unified Frontend (Streamlit) ---
+  frontend:
+    build:
+      context: ./frontend
+    container_name: rag_frontend
+    restart: always
+    depends_on:
+      - gateway
+    environment:
+      - GATEWAY_URL=http://gateway:8000/api
+    ports:
+      - "8005:8501"
+
   # --- PostgreSQL + pgvector (for Vector-RAG) ---
   db:
     image: pgvector/pgvector:pg16
