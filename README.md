@@ -5,31 +5,37 @@ A modular RAG (Retrieval-Augmented Generation) platform composed of three indepe
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│           API Gateway  (:8000)                  │
-│    /api/graph/*  /api/vector/*  /api/voice/*    │
-└─────┬───────────────┬──────────────┬────────────┘
-      │               │              │
-┌─────▼─────┐  ┌──────▼──────┐  ┌───▼──────────┐
-│ Graph-RAG │  │ Vector-RAG  │  │  Voice-RAG   │
-│   :8001   │  │   :8002     │  │ Server :8003 │
-│ Neo4j+Groq│  │pgvector+Groq│  │ Client :8004 │
-└───────────┘  └──────┬──────┘  └──────────────┘
-                      │
-               ┌──────▼──────┐
-               │ PostgreSQL  │
-               │  (pgvector) │
-               └─────────────┘
+┌──────────────────────────────────────────────────────────┐
+│              Unified Frontend (:8005)                    │
+│      (Single Dashboard for all RAG services)             │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+┌──────────────────────────▼───────────────────────────────┐
+│                API Gateway  (:8000)                      │
+│     /api/graph/*  /api/vector/*  /api/voice/*            │
+└───────┬──────────────────┬──────────────────┬────────────┘
+        │                  │                  │
+┌───────▼───────┐  ┌───────▼───────┐  ┌───────▼───────┐
+│   Graph-RAG   │  │   Vector-RAG  │  │   Voice-RAG   │
+│     :8001     │  │     :8002     │  │ Server :8003  │
+│  Neo4j + Groq │  │ pgvector+Groq │  └───────────────┘
+└───────────────┘  └───────┬───────┘
+                           │
+                    ┌──────▼──────┐
+                    │  PostgreSQL │
+                    │  (pgvector) │
+                    └─────────────┘
 ```
 
 ## Services
 
 | Service | Port | Stack | Purpose |
 |---------|------|-------|---------|
-| **Graph-RAG** | 8001 | Neo4j + Groq Llama-3 | Portfolio chatbot with strict grounding via Knowledge Graph |
-| **Vector-RAG** | 8002 | pgvector + FastAPI | Document Q&A with vector similarity search |
-| **Voice-RAG** | 8003/8004 | FAISS + ElevenLabs TTS | Voice-to-voice document assistant |
-| **Gateway** | 8000 | FastAPI + httpx | Unified API entry point |
+| **Unified Frontend**| 8005 | Streamlit | Single dashboard for interacting with all services |
+| **API Gateway** | 8000 | FastAPI + httpx | Unified entry point & routing hub |
+| **Graph-RAG** | 8001 | Neo4j + Groq | Strict grounded knowledge via Knowledge Graph |
+| **Vector-RAG** | 8002 | pgvector + FastAPI | Semantic document search and Q&A |
+| **Voice-RAG** | 8003 | Flask + ElevenLabs | Multimodal voice-to-voice document assistant |
 
 ## Quick Start
 
@@ -44,23 +50,11 @@ cp .env.template .env
 docker-compose up --build
 ```
 
-### 3. Test
-```bash
-# Gateway health check
-curl http://localhost:8000/health
+### 3. Access the Dashboard
+Open your browser and navigate to:
+**[http://localhost:8005](http://localhost:8005)**
 
-# Query Graph-RAG via gateway
-curl -X POST http://localhost:8000/api/graph/query \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What projects has Monisha worked on?"}'
-
-# Upload PDF to Vector-RAG
-curl -X POST http://localhost:8000/api/vector/upload \
-  -F "file=@document.pdf"
-
-# Voice-RAG client UI
-open http://localhost:8004
-```
+From here, you can switch between Graph-RAG, Vector-RAG, and Voice-RAG modes in a single interface.
 
 ## Local Development (Single Service)
 
